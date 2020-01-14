@@ -15,6 +15,9 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.web.firewall.DefaultHttpFirewall;
+import org.springframework.security.web.firewall.HttpFirewall;
 
 @SpringBootApplication
 
@@ -22,5 +25,10 @@ public class AuthenticationApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(AuthenticationApplication.class, args);
-	}	
+	}
+
+	@Bean
+	public HttpFirewall defaultHttpFirewall() {
+		return new DefaultHttpFirewall();
+	}
 }

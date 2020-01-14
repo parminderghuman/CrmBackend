@@ -1,3 +1,4 @@
+
 package com.parminder.authentication.bo;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class User {
 	
 	UserType userType;
 	
-	List<String> roles;	
+	List<String> role;	
 	
 	Status status;
 	
@@ -37,11 +38,11 @@ public class User {
 	public void set_id(ObjectId _id) {
 		this._id = _id;
 	}
-	public List<String> getRoles() {
-		return roles;
+	public List<String> getRole() {
+		return role;
 	}
-	public void setRoles(List<String> roles) {
-		this.roles = roles;
+	public void setRole(List<String> roles) {
+		this.role = roles;
 	}
 	public String getEmail() {
 		return email;

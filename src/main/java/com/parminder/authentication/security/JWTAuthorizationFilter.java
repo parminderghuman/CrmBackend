@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -83,7 +85,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 			        RequestContextHolder.getRequestAttributes().setAttribute("user",user,0);
 			        //return new User(user.getEmail(), user.getPassword(), isEnable, isUserNotExpired, isCredetialNotExpired, isAcoountNotLocked, grantedAuthorities);
 			        Genric m = mongoTemplate.findById(user.get_id()+"users",Genric.class,"encoded_passwords");
-
+			      //  mongoTemplate.find(new Query().addCriteria(Criteria.where(key)), entityClass)
 				return new UsernamePasswordAuthenticationToken(user.getEmail(), m.get("value").toString(),	grantedAuthorities);
 
 			}

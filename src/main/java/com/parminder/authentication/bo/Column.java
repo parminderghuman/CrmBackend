@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Column {
 
 	public enum Type {
-		Boolean, Integer, Double, Date, Long, String, ObjectId, File, Reference,Select,Password
+		Boolean, Integer, Double, Date, Long, String, ObjectId, File, Reference,Select,Password, MultiSelect,MultiObject
 	}
 
 	String name;

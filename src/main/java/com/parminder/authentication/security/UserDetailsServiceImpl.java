@@ -49,14 +49,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 		boolean isCredetialNotExpired = true;
 		boolean isAcoountNotLocked = true;
         if(user.getStatus() !=Status.Active ) {
-        	isEnable = false;
+        //	isEnable = false;
         }
         
         Set grantedAuthorities = new HashSet<>();
-		grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" +user.getUserType()));
+		//grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" +user.getUserType()));
         RequestContextHolder.getRequestAttributes().setAttribute("user",user,0);
         Genric m = mongoTemplate.findById(user.get_id()+"users",Genric.class,"encoded_passwords");
-        return new User(user.get_id().toString(), m.get("Value").toString(), isEnable, isUserNotExpired, isCredetialNotExpired, isAcoountNotLocked, grantedAuthorities);
+        return new User(user.get_id().toString(), m.get("value").toString(), isEnable, isUserNotExpired, isCredetialNotExpired, isAcoountNotLocked, grantedAuthorities);
     }
 	
 }

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "system_tables")
@@ -20,7 +21,17 @@ public class Table {
 	
 	List<String> allowedNames;
 	
+	String parentClass;
+	
 	List<Permissions> permissions;
+	
+	boolean alias;
+	
+	String aliasRules;
+	
+	@Transient
+	List<Table> childTables;
+	
 
 	public String getName() {
 		return name;
@@ -38,7 +49,15 @@ public class Table {
 		this.columns = columns;
 	}
 
-	
+
+
+	public String getParentClass() {
+		return parentClass;
+	}
+
+	public void setParentClass(String parentClass) {
+		this.parentClass = parentClass;
+	}
 
 	public String get_id() {
 		return _id;
@@ -68,8 +87,34 @@ public class Table {
 		return icon;
 	}
 
+	public List<Table> getChildTables() {
+		return childTables;
+	}
+
+	public void setChildTables(List<Table> childTables) {
+		this.childTables = childTables;
+	}
+
 	public void setIcon(String icon) {
 		this.icon = icon;
+	}
+
+
+	public boolean getAlias() {
+		return alias;
+	}
+
+	public void setAlias(boolean alias) {
+		this.alias = alias;
+	}
+
+
+	public String getAliasRules() {
+		return aliasRules;
+	}
+
+	public void setAliasRules(String aliasRules) {
+		this.aliasRules = aliasRules;
 	}
 	
 }

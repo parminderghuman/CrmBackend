@@ -2,16 +2,19 @@ package com.parminder.authentication.bo;
 
 public class Permissions {
 
-	
 	String role;
-	
+
 	boolean read;
-	
+
 	boolean write;
-	
+
 	boolean delete;
+
+	String readRule; 
 	
-	String rule; 
+	String rule;
+	
+	boolean canAdd;
 
 	public String getRole() {
 		return role;
@@ -52,6 +55,21 @@ public class Permissions {
 	public void setRule(String rule) {
 		this.rule = rule;
 	}
-		
-	
+
+	public boolean isCanAdd() {
+		return canAdd;
+	}
+
+	public void setCanAdd(boolean canAdd) {
+		this.canAdd = canAdd;
+	}
+
+	public String getReadRule() {
+		return readRule;
+	}
+
+	public void setReadRule(String readRule) {
+		this.readRule = readRule;
+	}
+
 }

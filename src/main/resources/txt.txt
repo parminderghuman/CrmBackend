@@ -1,0 +1,163 @@
+db.system_tables.find().pretty();
+{
+	"_id" : ObjectId("5e0f047e89ab910f15437882"),
+	"name" : "Role",
+	"icon" : "add",
+	"columns" : [
+		{
+			"name" : "Role",
+			"displayName" : "Role",
+			"type" : "String",
+			"uniqueValue" : false,
+			"nullValue" : true,
+			"dropDownValue" : true
+		}
+	],
+	"parentClass" : "5e0f1e2a5a98fd0c88d0ce46",
+	"permissions" : [
+		{
+			"role" : "*",
+			"read" : true,
+			"write" : false,
+			"delete" : false,
+			"canAdd" : false
+		}
+	],
+	"_class" : "com.parminder.authentication.bo.Table"
+}
+{
+	"_id" : ObjectId("5e0f058289ab910f15437883"),
+	"name" : "users",
+	"icon" : "add",
+	"columns" : [
+		{
+			"name" : "email",
+			"displayName" : "Email",
+			"type" : "String",
+			"uniqueValue" : true,
+			"nullValue" : false,
+			"dropDownValue" : true
+		},
+		{
+			"name" : "password",
+			"displayName" : "Password",
+			"type" : "String",
+			"uniqueValue" : false,
+			"nullValue" : true,
+			"dropDownValue" : false
+		},
+		{
+			"name" : "comapnyId",
+			"displayName" : "Company Id",
+			"type" : "ObjectId",
+			"uniqueValue" : false,
+			"nullValue" : true,
+			"dropDownValue" : false,
+			"targetClass" : "5e0f1e2a5a98fd0c88d0ce46"
+		},
+		{
+			"name" : "role",
+			"displayName" : "Role",
+			"type" : "MultiObject",
+			"uniqueValue" : false,
+			"nullValue" : true,
+			"dropDownValue" : false,
+			"targetClass" : "5e0f047e89ab910f15437882"
+		}
+	],
+	"parentClass" : "5e0f1e2a5a98fd0c88d0ce46",
+	"permissions" : [ ],
+	"_class" : "com.parminder.authentication.bo.Table"
+}
+{
+	"_id" : ObjectId("5e0f1e2a5a98fd0c88d0ce46"),
+	"name" : "Company",
+	"icon" : "domain",
+	"columns" : [
+		{
+			"name" : "name",
+			"displayName" : "Name",
+			"type" : "String",
+			"uniqueValue" : true,
+			"nullValue" : false,
+			"dropDownValue" : true
+		},
+		{
+			"name" : "owner",
+			"displayName" : "Owner",
+			"type" : "ObjectId",
+			"uniqueValue" : false,
+			"nullValue" : true,
+			"dropDownValue" : false,
+			"targetClass" : "5e0f058289ab910f15437883"
+		}
+	],
+	"permissions" : [
+		{
+			"role" : "5e145e3bdc73cb0f32ebe0d9",
+			"read" : true,
+			"write" : true,
+			"delete" : true,
+			"readRule" : "{\"owner\":\"$loggedInUser.CompanyId\"}",
+			"canAdd" : true
+		}
+	],
+	"_class" : "com.parminder.authentication.bo.Table"
+}
+{
+	"_id" : ObjectId("5e12ff7628dafc6ae51a06db"),
+	"name" : "Driver",
+	"icon" : "",
+	"columns" : [
+		{
+			"name" : "",
+			"type" : "Boolean",
+			"uniqueValue" : false,
+			"nullValue" : true,
+			"dropDownValue" : false
+		}
+	],
+	"parentClass" : "5e0f058289ab910f15437883",
+	"permissions" : [ ],
+	"alias" : true,
+	"aliasRules" : "{\"role\":[\"5e145e66dc73cb0f32ebe0da\"]}",
+	"_class" : "com.parminder.authentication.bo.Table"
+}
+{
+	"_id" : ObjectId("5e144bdbeaddf013eb335d29"),
+	"name" : "Trst",
+	"icon" : "",
+	"columns" : [
+		{
+			"name" : "Test",
+			"displayName" : "Test",
+			"type" : "MultiSelect",
+			"options" : [
+				"One",
+				"Two",
+				"Thrre"
+			],
+			"uniqueValue" : false,
+			"nullValue" : true,
+			"dropDownValue" : false
+		}
+	],
+	"permissions" : [ ],
+	"_class" : "com.parminder.authentication.bo.Table"
+}
+{
+	"_id" : ObjectId("5e19a564c44928764323e444"),
+	"name" : "Truck",
+	"icon" : "",
+	"columns" : [
+		{
+			"name" : "Name",
+			"type" : "Boolean",
+			"uniqueValue" : false,
+			"nullValue" : true,
+			"dropDownValue" : false
+		}
+	],
+	"permissions" : [ ],
+	"_class" : "com.parminder.authentication.bo.Table"
+}
