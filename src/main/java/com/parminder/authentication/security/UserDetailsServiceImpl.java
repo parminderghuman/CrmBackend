@@ -55,7 +55,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Set grantedAuthorities = new HashSet<>();
 		//grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" +user.getUserType()));
         RequestContextHolder.getRequestAttributes().setAttribute("user",user,0);
-        Genric m = mongoTemplate.findById(user.get_id()+"users",Genric.class,"encoded_passwords");
+        Genric m = mongoTemplate.findById(user.get_id()+"-users-"+"password",Genric.class,"encoded_passwords");
         return new User(user.get_id().toString(), m.get("value").toString(), isEnable, isUserNotExpired, isCredetialNotExpired, isAcoountNotLocked, grantedAuthorities);
     }
 	

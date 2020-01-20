@@ -22,6 +22,8 @@ public class User {
 	ObjectId _id;
 
 	String email;
+	
+	String mobileNumber; 
 	//@JsonIgnore
 	String password;
 	
@@ -67,6 +69,12 @@ public class User {
 	}
 	public void setStatus(Status status) {
 		this.status = status;
+	}
+	public String getMobileNumber() {
+		return mobileNumber;
+	}
+	public void setMobileNumber(String mobileNumber) {
+		this.mobileNumber = mobileNumber;
 	}
 	
 		

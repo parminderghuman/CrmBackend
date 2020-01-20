@@ -1,3 +1,11 @@
+db.users
+
+{ "_id" : ObjectId("5df9ea76f9f4a123e8941ff7"), "email" : "admin@load.com", "password" : "", "comapnyId" : "5e0f284452756b7091e7e737", "role" : [ "5e0f1c425a98fd0c88d0ce45", "5e145e66dc73cb0f32ebe0da", "5e145e3bdc73cb0f32ebe0d9" ], "updatedBy" : ObjectId("5df9ea76f9f4a123e8941ff7"), "updateAt" : ISODate("2020-01-08T08:31:23.127Z"), "createdAt" : null, "createdBy" : ObjectId("5df9ea76f9f4a123e8941ff7"), "userType" : "SuperAdmin", "status" : "Active" }
+
+encoded pass	word 
+db.encoded_passwords
+{ "_id" : "5df9ea76f9f4a123e8941ff7-users-password", "value" : "$2a$10$Wk8KDHIhKr34ydpFzdWQxuvDaaTUQsyiD9iBSklhh2nQpXRsoeiEq" }
+
 db.system_tables.find().pretty();
 {
 	"_id" : ObjectId("5e0f047e89ab910f15437882"),

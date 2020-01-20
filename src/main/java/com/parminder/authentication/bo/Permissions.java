@@ -9,6 +9,8 @@ public class Permissions {
 	boolean write;
 
 	boolean delete;
+	
+	boolean canList;
 
 	String readRule; 
 	
@@ -70,6 +72,14 @@ public class Permissions {
 
 	public void setReadRule(String readRule) {
 		this.readRule = readRule;
+	}
+
+	public boolean isCanList() {
+		return canList;
+	}
+
+	public void setCanList(boolean canList) {
+		this.canList = canList;
 	}
 
 }

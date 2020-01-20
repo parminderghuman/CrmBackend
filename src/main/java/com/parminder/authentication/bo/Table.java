@@ -1,5 +1,6 @@
 package com.parminder.authentication.bo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.types.ObjectId;
@@ -115,6 +116,14 @@ public class Table {
 
 	public void setAliasRules(String aliasRules) {
 		this.aliasRules = aliasRules;
+	}
+
+	public void addChildTables(Table cTT) {
+		if(this.childTables == null) {
+			childTables = new ArrayList<Table>();
+			
+		}
+		childTables.add(cTT);		
 	}
 	
 }

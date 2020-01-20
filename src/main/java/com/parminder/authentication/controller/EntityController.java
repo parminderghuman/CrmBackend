@@ -1,6 +1,9 @@
 package com.parminder.authentication.controller;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -39,6 +42,8 @@ import com.parminder.authentication.bo.User;
 import com.parminder.authentication.bo.User.UserType;
 import com.parminder.authentication.repository.TableRepository;
 
+import io.jsonwebtoken.lang.Collections;
+
 @RestController
 public class EntityController {
 
@@ -68,15 +73,17 @@ public class EntityController {
 		User user = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
 		List<String> roles = user.getRole();
 		Query query = new Query();
+		Table table = tableRepository.findByName(entity);
+		Table parentClass = table;
+		if (table.getAlias()) {
+			parentClass = tableRepository.findById(table.getParentClass()).get();
+		}
 		if (user.getUserType() == UserType.SuperAdmin) {
 
 		} else {
 
-			Table table = tableRepository.findByName(entity);
-			Table parentClass = table;
-			if (table.getAlias()) {
-				parentClass = tableRepository.findById(table.getParentClass()).get();
-			}
+			
+			
 			Permissions p = null;
 			for (Permissions action : parentClass.getPermissions()) {
 				if ("*".equals(action.getRole())) {
@@ -86,7 +93,7 @@ public class EntityController {
 				}
 
 			}
-			if ("*".equals(p.getRule())) {
+			if ("*".equals(p.getRole())) {
 
 			} else if (p.isRead()) {
 				if (p.getReadRule() != null) {
@@ -114,22 +121,51 @@ public class EntityController {
 
 		List<Genric> l = mongoTemplate.find(query, Genric.class, entity);
 		l.forEach(j -> {
-			j.put("_id", j.get("_id") + "");
-			j.forEach((s, k) -> {
-				if (k instanceof ObjectId) {
-					j.put(s, k + "");
-				}
-			});
+			j = forMattData(table, j);
 		});
 		return l;
 	}
 
+	public Genric forMattData(Table table, Genric l) {
+
+	l.put("_id",l.get("_id")+"");
+
+	table.getColumns().forEach(actions->
+
+	{
+		if (actions.getType() == Column.Type.ObjectId && l.containsKey(actions.getName())
+				&& l.get(actions.getName()) != null) {
+			l.put(actions.getName(), l.get(actions.getName()) + "");
+		}
+		if (actions.getType() == Column.Type.MultiObject && l.containsKey(actions.getName())
+				&& l.get(actions.getName()) != null) {
+			Object v = l.get(actions.getName());
+			if (v instanceof Array) {
+				v = Arrays.asList(v);
+			}
+			if (v instanceof List) {
+				List<String> sp = new ArrayList<String>();
+				for( Object s : (List)v) {
+					sp.add(s + "");
+				}
+				v =sp;
+			}
+			l.put(actions.getName(),v);
+		}
+	});return l;
+}
+
 	@GetMapping(path = "/{entity}/{id}")
 	public Genric getTables(@PathVariable String entity, @PathVariable String id) {
 		Genric l = mongoTemplate.findById(id, Genric.class, entity);
-
+		Table table = tableRepository.findByName(entity);
 		l.put("_id", l.get("_id") + "");
-
+//		l.forEach((s, k) -> {
+//			if (k instanceof ObjectId) {
+//				l.put(s, k + "");
+//			}
+//		});
+		l = forMattData(table, l);
 		return l;
 	}
 
@@ -153,6 +189,8 @@ public class EntityController {
 				saveMap.put(column.getName(), data.get(column.getName() + ""));
 			} else if (column.getType() == Column.Type.Select && data.containsKey(column.getName())) {
 				saveMap.put(column.getName(), data.get(column.getName() + ""));
+			} else if (column.getType() == Column.Type.Date && data.containsKey(column.getName())) {
+				saveMap.put(column.getName(), data.get(column.getName() + ""));
 			} else if (column.getType() == Column.Type.MultiSelect && data.containsKey(column.getName())) {
 				Object v = data.get(column.getName() + "");
 				if (v instanceof String) {
@@ -162,7 +200,20 @@ public class EntityController {
 			} else if (column.getType() == Column.Type.MultiObject && data.containsKey(column.getName())) {
 				Object v = data.get(column.getName() + "");
 				if (v instanceof String) {
-					v = ((String) v).split(",");
+					String[] k = ((String) v).split(",");
+					v = Arrays.asList(k);
+
+				}
+				if (v instanceof String[]) {
+					v = Arrays.asList(v);
+				}
+				if (v instanceof List) {
+					List<ObjectId> sp = new ArrayList<ObjectId>();
+					for( String s : (List<String>)v) {
+						sp.add(new ObjectId(s + ""));
+					}
+					v =sp;
+					
 				}
 
 				saveMap.put(column.getName(), v);
@@ -202,11 +253,11 @@ public class EntityController {
 			saveMap.put("createdBy", user.get_id());
 		} else {
 			saveMap.put("createdAt", data.get("updateAt"));
-			if(data.get("createdBy") != null) {
+			if (data.get("createdBy") != null) {
 				try {
-				saveMap.put("createdBy", new ObjectId(data.get("createdBy") + ""));
-				}catch(Exception e) {
-					
+					saveMap.put("createdBy", new ObjectId(data.get("createdBy") + ""));
+				} catch (Exception e) {
+
 				}
 
 			}
@@ -217,9 +268,9 @@ public class EntityController {
 			for (String key : passwordMap.keySet()) {
 
 				Map<String, Object> map = new HashMap<String, Object>();
-				map.put("_id", l.get("_id") + entity);
+				map.put("_id", l.get("_id") + "-" + entity + "-" + key);
 				map.put("value", passwordMap.get(key));
-				mongoTemplate.save(map , "encoded_passwords");
+				mongoTemplate.save(map, "encoded_passwords");
 
 			}
 		}
