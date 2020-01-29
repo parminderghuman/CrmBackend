@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 
@@ -19,7 +20,7 @@ public class User {
 	}
 
 	@Id		
-	ObjectId _id;
+	String _id;
 
 	String email;
 	
@@ -33,11 +34,15 @@ public class User {
 	
 	Status status;
 	
+	String parent_id ;
 	
-	public ObjectId get_id() {
+	@Transient
+	String id;
+	
+	public String get_id() {
 		return _id;
 	}
-	public void set_id(ObjectId _id) {
+	public void set_id(String _id) {
 		this._id = _id;
 	}
 	public List<String> getRole() {
@@ -75,6 +80,24 @@ public class User {
 	}
 	public void setMobileNumber(String mobileNumber) {
 		this.mobileNumber = mobileNumber;
+	}
+	public String getId() {
+		if(this._id != null) {
+			id= _id.toString();
+		}	
+		return id;
+	}
+	public void setId(String id) {
+		if(this._id != null) {
+			id= _id.toString();
+		}
+		this.id = id;
+	}
+	public String getParent_id() {
+		return parent_id;
+	}
+	public void setParent_id(String parent_id) {
+		this.parent_id = parent_id;
 	}
 	
 		

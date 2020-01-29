@@ -86,11 +86,11 @@ public class TableController {
 						}
 						if(p.getRole().equals("*") && p.isCanList()) {
 							table.addChildTables(CTT);
-							continue;
+							break;
 						}
 						else if( loggerInUser.getRole().contains(p.getRole() ) && p.isCanList()) {
 							table.addChildTables(CTT);	
-							continue;
+							break;
 						}
 					}					
 				}
@@ -98,16 +98,17 @@ public class TableController {
 			
 				for(Permissions  p : table.getPermissions()) {
 					if(p.getRole() == null) {
+						rT.add(table);
 						continue;
 					}
 					if(p.getRole().equals("*") 	) {
 						rT.add(table);
-						continue;
+						break;
 						
 					}
 					else if( loggerInUser.getRole().contains(p.getRole() ) ) {
 						rT.add(table);
-						continue;
+						break;
 					}
 				}
 			}

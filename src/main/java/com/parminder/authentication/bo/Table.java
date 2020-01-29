@@ -25,7 +25,7 @@ public class Table {
 	String parentClass;
 	
 	List<Permissions> permissions;
-	
+	String displayName;
 	boolean alias;
 	
 	String aliasRules;
@@ -124,6 +124,14 @@ public class Table {
 			
 		}
 		childTables.add(cTT);		
+	}
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
 	}
 	
 }

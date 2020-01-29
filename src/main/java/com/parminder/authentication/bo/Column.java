@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Column {
 
 	public enum Type {
-		Boolean, Integer, Double, Date, Long, String, ObjectId, File, Reference,Select,Password, MultiSelect,MultiObject
+		Address,Boolean, Integer, Double, Date, Long, String, ObjectId, File, Reference,Select,Password, MultiSelect,MultiObject
 	}
 
 	String name;
@@ -17,12 +17,30 @@ public class Column {
 			
 	Type type;
 	
+	String condition;
+	
 	List<String> options;
 
 	boolean uniqueValue;
 
 	boolean nullValue;
 	
+	boolean dropDownValue;
+	
+	String defaultValue;
+	
+	String targetClass;
+		
+	boolean listValue;
+
+	public boolean isListValue() {
+		return listValue;
+	}
+
+	public void setListValue(boolean listValue) {
+		this.listValue = listValue;
+	}
+
 	public boolean isDropDownValue() {
 		return dropDownValue;
 	}
@@ -31,12 +49,7 @@ public class Column {
 		this.dropDownValue = dropDownValue;
 	}
 
-	boolean dropDownValue;
 	
-	String defaultValue;
-	
-	String targetClass;
-
 	public String getName() {
 		return name;
 	}
@@ -99,6 +112,14 @@ public class Column {
 
 	public void setOptions(List<String> options) {
 		this.options = options;
+	}
+
+	public String getCondition() {
+		return condition;
+	}
+
+	public void setCondition(String condition) {
+		this.condition = condition;
 	}
 
 	

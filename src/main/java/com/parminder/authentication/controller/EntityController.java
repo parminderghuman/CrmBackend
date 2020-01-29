@@ -76,27 +76,26 @@ public class EntityController {
 		Table table = tableRepository.findByName(entity);
 		Table parentClass = table;
 		if (table.getAlias()) {
-			parentClass = tableRepository.findById(table.getParentClass()).get();
+			parentClass = tableRepository.findById(table.getParentClass().toString()).get();
 		}
 		if (user.getUserType() == UserType.SuperAdmin) {
 
 		} else {
 
-			
-			
 			Permissions p = null;
 			for (Permissions action : parentClass.getPermissions()) {
 				if ("*".equals(action.getRole())) {
 					p = action;
 				} else if (roles.contains(action.getRole())) {
 					p = action;
+					break;
 				}
 
 			}
 			if ("*".equals(p.getRole())) {
 
 			} else if (p.isRead()) {
-				if (p.getReadRule() != null) {
+				if (p.getReadRule() != null && !p.getReadRule().trim().isEmpty()) {
 					Genric genricUser = mongoTemplate.findById(user.get_id(), Genric.class, "users");
 					JSONObject jsonObject = new JSONObject(p.getReadRule());
 					for (String key : jsonObject.keySet()) {
@@ -112,11 +111,27 @@ public class EntityController {
 				throw new Exception("dont have permission");
 			}
 		}
-
+		System.out.println(request.getParameterMap());
 		request.getParameterMap().forEach((key, valye) -> {
 			if (key.equals("parent_id")) {
-				query.addCriteria(Criteria.where("parent_id").is(new ObjectId(searchCreteria.get("parent_id") + "")));
+				query.addCriteria(Criteria.where("parent_id").is(new ObjectId(searchCreteria.get(key) + "")));
+
+			}else if (key.equals("_id")) { 
+				query.addCriteria(Criteria.where(key).is(new ObjectId(searchCreteria.get(key) + "")));
+			}else {
+				Object b = searchCreteria.get(key);
+				try {
+					JSONObject bi = new JSONObject(b.toString());
+					for (String biKey : bi.keySet()) {
+						if (biKey.equals("$in")) {
+							query.addCriteria(Criteria.where(key).in(new ObjectId(bi.get(biKey)+"")));
+						}
+					}
+				} catch (Exception e) {
+					query.addCriteria(Criteria.where(key).is(b+""));
+				}
 			}
+
 		});
 
 		List<Genric> l = mongoTemplate.find(query, Genric.class, entity);
@@ -128,32 +143,33 @@ public class EntityController {
 
 	public Genric forMattData(Table table, Genric l) {
 
-	l.put("_id",l.get("_id")+"");
+		l.put("_id", l.get("_id") + "");
 
-	table.getColumns().forEach(actions->
+		table.getColumns().forEach(actions ->
 
-	{
-		if (actions.getType() == Column.Type.ObjectId && l.containsKey(actions.getName())
-				&& l.get(actions.getName()) != null) {
-			l.put(actions.getName(), l.get(actions.getName()) + "");
-		}
-		if (actions.getType() == Column.Type.MultiObject && l.containsKey(actions.getName())
-				&& l.get(actions.getName()) != null) {
-			Object v = l.get(actions.getName());
-			if (v instanceof Array) {
-				v = Arrays.asList(v);
+		{
+			if (actions.getType() == Column.Type.ObjectId && l.containsKey(actions.getName())
+					&& l.get(actions.getName()) != null) {
+				l.put(actions.getName(), l.get(actions.getName()) + "");
 			}
-			if (v instanceof List) {
-				List<String> sp = new ArrayList<String>();
-				for( Object s : (List)v) {
-					sp.add(s + "");
+			if (actions.getType() == Column.Type.MultiObject && l.containsKey(actions.getName())
+					&& l.get(actions.getName()) != null) {
+				Object v = l.get(actions.getName());
+				if (v instanceof Array) {
+					v = Arrays.asList(v);
 				}
-				v =sp;
+				if (v instanceof List) {
+					List<String> sp = new ArrayList<String>();
+					for (Object s : (List) v) {
+						sp.add(s + "");
+					}
+					v = sp;
+				}
+				l.put(actions.getName(), v);
 			}
-			l.put(actions.getName(),v);
-		}
-	});return l;
-}
+		});
+		return l;
+	}
 
 	@GetMapping(path = "/{entity}/{id}")
 	public Genric getTables(@PathVariable String entity, @PathVariable String id) {
@@ -191,6 +207,8 @@ public class EntityController {
 				saveMap.put(column.getName(), data.get(column.getName() + ""));
 			} else if (column.getType() == Column.Type.Date && data.containsKey(column.getName())) {
 				saveMap.put(column.getName(), data.get(column.getName() + ""));
+			} else if (column.getType() == Column.Type.Address && data.containsKey(column.getName())) {
+				saveMap.put(column.getName(), data.get(column.getName() + ""));
 			} else if (column.getType() == Column.Type.MultiSelect && data.containsKey(column.getName())) {
 				Object v = data.get(column.getName() + "");
 				if (v instanceof String) {
@@ -209,11 +227,11 @@ public class EntityController {
 				}
 				if (v instanceof List) {
 					List<ObjectId> sp = new ArrayList<ObjectId>();
-					for( String s : (List<String>)v) {
+					for (String s : (List<String>) v) {
 						sp.add(new ObjectId(s + ""));
 					}
-					v =sp;
-					
+					v = sp;
+
 				}
 
 				saveMap.put(column.getName(), v);
@@ -229,7 +247,7 @@ public class EntityController {
 		if (table.getParentClass() != null && data.get("parent_id") == null) {
 			throw new Exception("Parent not found");
 		} else if (table.getParentClass() != null) {
-			Table pTable = tableRepository.findById(table.getParentClass()).get();
+			Table pTable = tableRepository.findById(table.getParentClass().toString()).get();
 			Genric ob = mongoTemplate.findById(new ObjectId(data.get("parent_id") + ""), Genric.class,
 					pTable.getName());
 			if (ob == null) {
