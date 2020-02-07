@@ -39,7 +39,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	MongoTemplate mongoTemplate;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        com.parminder.authentication.bo.User user = userRepository.findByEmail(username);
+        com.parminder.authentication.bo.User user = userRepository.findByUsername(username);
         if (user == null) {
         	
             throw new UsernameNotFoundException(username);

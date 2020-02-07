@@ -86,7 +86,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 			        //return new User(user.getEmail(), user.getPassword(), isEnable, isUserNotExpired, isCredetialNotExpired, isAcoountNotLocked, grantedAuthorities);
 			        Genric m = mongoTemplate.findById(user.get_id()+"-users-"+"password",Genric.class,"encoded_passwords");
 			      //  mongoTemplate.find(new Query().addCriteria(Criteria.where(key)), entityClass)
-				return new UsernamePasswordAuthenticationToken(user.getEmail(), m.get("value").toString(),	grantedAuthorities);
+				return new UsernamePasswordAuthenticationToken(user.getUsername(), m.get("value").toString(),	grantedAuthorities);
 
 			}
 		}

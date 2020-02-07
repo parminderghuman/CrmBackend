@@ -6,6 +6,9 @@ import java.util.LinkedHashMap;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
+
 public class Genric extends LinkedHashMap<String,Object>{
 
 	

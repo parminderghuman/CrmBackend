@@ -9,6 +9,6 @@ import com.parminder.authentication.bo.User;
 
 @Repository
 public interface UserRepository extends MongoRepository<User, String> {
-	@Query("{ 'email' : ?0 }")
-	User findByEmail(String email);
+	@Query("{ 'username' : ?0 }")
+	User findByUsername(String username);
 }

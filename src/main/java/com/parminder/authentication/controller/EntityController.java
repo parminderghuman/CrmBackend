@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -22,6 +23,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.CriteriaDefinition;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.RequestContext;
 
 import com.parminder.authentication.bo.Column;
@@ -38,9 +41,12 @@ import com.parminder.authentication.bo.Genric;
 import com.parminder.authentication.bo.Permissions;
 import com.parminder.authentication.bo.Role;
 import com.parminder.authentication.bo.Table;
+import com.parminder.authentication.bo.TablePermission;
 import com.parminder.authentication.bo.User;
 import com.parminder.authentication.bo.User.UserType;
+import com.parminder.authentication.repository.TablePermissionRepository;
 import com.parminder.authentication.repository.TableRepository;
+import com.parminder.authentication.repository.UserRepository;
 
 import io.jsonwebtoken.lang.Collections;
 
@@ -49,9 +55,16 @@ public class EntityController {
 
 	@Autowired
 	MongoTemplate mongoTemplate;
-
+	@Autowired
+	TablePermissionRepository tablePermissionRepository;
+	
+	@Autowired
+	ChatController chatController;
 	@Autowired
 	BCryptPasswordEncoder bCryptPasswordEncoder;
+	
+	@Autowired 
+	UserRepository userRepository;
 
 	@Autowired
 	TableRepository tableRepository;
@@ -78,57 +91,56 @@ public class EntityController {
 		if (table.getAlias()) {
 			parentClass = tableRepository.findById(table.getParentClass().toString()).get();
 		}
-		if (user.getUserType() == UserType.SuperAdmin) {
+		if (user.getUserType() == UserType.SuperAdmin || user.getUserType() == UserType.CompanyAdmin) {
 
 		} else {
-
-			Permissions p = null;
-			for (Permissions action : parentClass.getPermissions()) {
-				if ("*".equals(action.getRole())) {
-					p = action;
-				} else if (roles.contains(action.getRole())) {
-					p = action;
-					break;
-				}
-
-			}
-			if ("*".equals(p.getRole())) {
-
-			} else if (p.isRead()) {
-				if (p.getReadRule() != null && !p.getReadRule().trim().isEmpty()) {
-					Genric genricUser = mongoTemplate.findById(user.get_id(), Genric.class, "users");
-					JSONObject jsonObject = new JSONObject(p.getReadRule());
-					for (String key : jsonObject.keySet()) {
-						String value = jsonObject.getString(key);
-						String[] val = value.split("\\.");
-						if (val[0].equals("$loggedInUser")) {
-							query.addCriteria(Criteria.where(key).is(new ObjectId(genricUser.get(val[1]) + "")));
+			TablePermission tablePermission = tablePermissionRepository.findByClassIdAndParentId(new ObjectId(table.get_id()),new ObjectId(user.getParent_id()));
+			Criteria c  =new Criteria();
+			for(Entry<String, Permissions> entrySet : tablePermission.getRolePermissions().entrySet()) {
+				String role = entrySet.getKey();
+				Permissions p = entrySet.getValue();
+				
+				boolean isFirst = true;
+				if(user.getRole().contains(role)) {
+					if(p.getReadRule() != null && !p.getReadRule().trim().isEmpty()) {
+						JSONObject jsonObject = new JSONObject(p.getReadRule());
+						JSONObject userJson = new JSONObject(user);
+						for (String key : jsonObject.keySet()) {
+							String value = jsonObject.getString(key);
+							String[] val = value.split("\\.");
+							if (val[0].equals("$loggedInUser")) {
+								System.out.println("key "+key+" : "+userJson.get(val[1]));
+								if(isFirst) {
+									c.and(key).is(new ObjectId(userJson.get(val[1]) + ""));
+									isFirst=false;
+								}else {
+									c.orOperator(Criteria.where(key).is(new ObjectId(userJson.get(val[1]) + "")));
+								}
+							}
 						}
 					}
-
 				}
-			} else {
-				throw new Exception("dont have permission");
 			}
+			query.addCriteria(c);
+			
 		}
-		System.out.println(request.getParameterMap());
 		request.getParameterMap().forEach((key, valye) -> {
 			if (key.equals("parent_id")) {
 				query.addCriteria(Criteria.where("parent_id").is(new ObjectId(searchCreteria.get(key) + "")));
 
-			}else if (key.equals("_id")) { 
+			} else if (key.equals("_id")) {
 				query.addCriteria(Criteria.where(key).is(new ObjectId(searchCreteria.get(key) + "")));
-			}else {
+			} else {
 				Object b = searchCreteria.get(key);
 				try {
 					JSONObject bi = new JSONObject(b.toString());
 					for (String biKey : bi.keySet()) {
 						if (biKey.equals("$in")) {
-							query.addCriteria(Criteria.where(key).in(new ObjectId(bi.get(biKey)+"")));
+							query.addCriteria(Criteria.where(key).in(new ObjectId(bi.get(biKey) + "")));
 						}
 					}
 				} catch (Exception e) {
-					query.addCriteria(Criteria.where(key).is(b+""));
+					query.addCriteria(Criteria.where(key).is(b + ""));
 				}
 			}
 
@@ -187,10 +199,17 @@ public class EntityController {
 
 	@PostMapping(path = "/{entity}")
 	public Genric CreateTable(@PathVariable String entity, @RequestBody Genric data) throws Exception {
-
+		final StringBuffer commentName = new StringBuffer();
+		;
+		List<ObjectId> chatUserList = new ArrayList<ObjectId>();
 		User user = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
 		Table table = tableRepository.findByName(entity);
-		Genric saveMap = new Genric();
+		 Genric saveMap1 = new Genric();
+		if(data.containsKey("_id")) {
+			saveMap1= mongoTemplate.findById(new ObjectId(data.get("_id")+""),Genric.class, entity);
+		}
+		final Genric saveMap = saveMap1;
+		
 		Map<String, Object> passwordMap = new HashMap<String, Object>();
 		table.getColumns().forEach(column -> {
 			if (column.getType() == Column.Type.Boolean && data.containsKey(column.getName())) {
@@ -229,19 +248,36 @@ public class EntityController {
 					List<ObjectId> sp = new ArrayList<ObjectId>();
 					for (String s : (List<String>) v) {
 						sp.add(new ObjectId(s + ""));
+						if (column.isParticipant()) {
+							User use = userRepository.findById(s+"").get();
+							if(use != null) {
+								chatUserList.add(new ObjectId(s+""));
+							}
+						}
 					}
 					v = sp;
 
 				}
-
+				
 				saveMap.put(column.getName(), v);
 			} else if (column.getType() == Column.Type.ObjectId && data.containsKey(column.getName())) {
 				saveMap.put(column.getName(), new ObjectId(data.get(column.getName() + "") + ""));
+				if (column.isParticipant()) {
+					User use = userRepository.findById(data.get(column.getName() + "")+"" ).get();
+					if(use != null) {
+						chatUserList.add(new ObjectId(data.get(column.getName() + "") + ""));
+					}
+					
+				}
+
 			} else if (column.getType() == Column.Type.Password && data.containsKey(column.getName())
 					&& data.get(column.getName() + "") != null
 					&& !data.get(column.getName() + "").toString().trim().isEmpty()) {
 				passwordMap.put(column.getName(),
 						bCryptPasswordEncoder.encode(data.get(column.getName() + "").toString()));
+			}
+			if (column.isDropDownValue()) {
+				commentName.append(data.get(column.getName() + "").toString());
 			}
 		});
 		if (table.getParentClass() != null && data.get("parent_id") == null) {
@@ -266,9 +302,13 @@ public class EntityController {
 
 		saveMap.put("updatedBy", user.get_id());
 		saveMap.put("updateAt", new Date());
+		if(data.containsKey("userType") ) {
+			saveMap.put("userType", data.get("userType"));
+		}
 		if (!data.containsKey("_id")) {
 			saveMap.put("createdAt", saveMap.get("updateAt"));
 			saveMap.put("createdBy", user.get_id());
+
 		} else {
 			saveMap.put("createdAt", data.get("updateAt"));
 			if (data.get("createdBy") != null) {
@@ -279,8 +319,19 @@ public class EntityController {
 				}
 
 			}
+			if (data.get("createdAt") != null) {
+				try {
+					saveMap.put("createdAt", data.get("createdAt"));
+				} catch (Exception e) {
+
+				}
+
+			}
 		}
 		Genric l = mongoTemplate.save(saveMap, entity);
+		chatUserList.add(new ObjectId(user.get_id()));
+		chatController.createEntityChat(commentName.toString(), new ObjectId(table.get_id()),
+				new ObjectId(l.get("_id") + ""), chatUserList);
 		l.put("_id", l.get("_id") + "");
 		if (passwordMap != null && passwordMap.size() > 0) {
 			for (String key : passwordMap.keySet()) {

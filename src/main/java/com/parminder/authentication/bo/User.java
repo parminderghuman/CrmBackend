@@ -8,11 +8,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
+
 
 @Document(collection = "users")
 public class User {
 	public enum UserType {
-		SuperAdmin, User, Admin,Driver
+		SuperAdmin, User, Admin,Driver,CompanyAdmin
 	}
 
 	public enum Status {
@@ -22,7 +25,7 @@ public class User {
 	@Id		
 	String _id;
 
-	String email;
+	String username;
 	
 	String mobileNumber; 
 	//@JsonIgnore
@@ -36,6 +39,9 @@ public class User {
 	
 	String parent_id ;
 	
+	Location location;	
+	
+
 	@Transient
 	String id;
 	
@@ -51,11 +57,17 @@ public class User {
 	public void setRole(List<String> roles) {
 		this.role = roles;
 	}
-	public String getEmail() {
-		return email;
+	public Location getLocation() {
+		return location;
 	}
-	public void setEmail(String email) {
-		this.email = email;
+	public void setLocation(Location location) {
+		this.location = location;
+	}	
+	public String getUsername() {
+		return username;
+	}
+	public void setUsername(String username) {
+		this.username = username;
 	}
 	public String getPassword() {
 		return password;

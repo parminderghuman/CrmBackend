@@ -5,10 +5,13 @@ import java.util.List;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
+	
 public class Column {
 
 	public enum Type {
-		Address,Boolean, Integer, Double, Date, Long, String, ObjectId, File, Reference,Select,Password, MultiSelect,MultiObject
+		Address,Boolean, Integer, Double, Date, Long, String, ObjectId, File, Reference,Select,Password, MultiSelect,MultiObject,Section
 	}
 
 	String name;
@@ -26,6 +29,8 @@ public class Column {
 	boolean nullValue;
 	
 	boolean dropDownValue;
+	
+	boolean participant;
 	
 	String defaultValue;
 	
@@ -120,6 +125,14 @@ public class Column {
 
 	public void setCondition(String condition) {
 		this.condition = condition;
+	}
+
+	public boolean isParticipant() {
+		return participant;
+	}
+
+	public void setParticipant(boolean participant) {
+		this.participant = participant;
 	}
 
 	

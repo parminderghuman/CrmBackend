@@ -2,37 +2,46 @@ package com.parminder.authentication.bo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
+
 @Document(collection = "system_tables")
 public class Table {
-	
+
 	@Id
 	String _id;
-	
+
 	String name;
-	
+
 	String icon;
-	
+
 	List<Column> columns;
-	
+
 	List<String> allowedNames;
-	
+
 	String parentClass;
-	
+
 	List<Permissions> permissions;
+
+	@Transient
+	Permissions permission;
+
 	String displayName;
 	boolean alias;
-	
+
 	String aliasRules;
-	
+
 	@Transient
 	List<Table> childTables;
-	
+	@Transient
+	Map<String, ColumnPermission> columnPermissions;
 
 	public String getName() {
 		return name;
@@ -49,8 +58,6 @@ public class Table {
 	public void setColumns(List<Column> columns) {
 		this.columns = columns;
 	}
-
-
 
 	public String getParentClass() {
 		return parentClass;
@@ -100,7 +107,6 @@ public class Table {
 		this.icon = icon;
 	}
 
-
 	public boolean getAlias() {
 		return alias;
 	}
@@ -108,7 +114,6 @@ public class Table {
 	public void setAlias(boolean alias) {
 		this.alias = alias;
 	}
-
 
 	public String getAliasRules() {
 		return aliasRules;
@@ -119,19 +124,35 @@ public class Table {
 	}
 
 	public void addChildTables(Table cTT) {
-		if(this.childTables == null) {
+		if (this.childTables == null) {
 			childTables = new ArrayList<Table>();
-			
+
 		}
-		childTables.add(cTT);		
+		childTables.add(cTT);
 	}
 
 	public String getDisplayName() {
 		return displayName;
 	}
 
+	public Permissions getPermission() {
+		return permission;
+	}
+
+	public void setPermission(Permissions permission) {
+		this.permission = permission;
+	}
+
 	public void setDisplayName(String displayName) {
 		this.displayName = displayName;
 	}
-	
+
+	public Map<String, ColumnPermission> getColumnPermissions() {
+		return columnPermissions;
+	}
+
+	public void setColumnPermissions(Map<String, ColumnPermission> columnPermissions) {
+		this.columnPermissions = columnPermissions;
+	}
+
 }
