@@ -1,5 +1,6 @@
 package com.parminder.authentication.bo.chat;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
+import com.parminder.authentication.bo.Genric;
 import com.parminder.authentication.bo.Location;
 import com.parminder.authentication.bo.User;
 
@@ -33,10 +35,10 @@ public class Message {
 	ObjectId messageBy;
 
 	@JsonIgnore
-	List<User> users;
+	List<Genric> users;
 
 	@Transient
-	User user;
+	Genric user;
 
 	String text;
 
@@ -86,20 +88,23 @@ public class Message {
 		this.messageBy = messageBy;
 	}
 
-	public List<User> getUsers() {
+	public List<Genric> getUsers() {
 		return users;
 	}
 
-	public void setUsers(List<User> users) {
+	public void setUsers(List<Genric> users) {
 		this.users = users;
 	}
 
-	public User getUser() {
+	public Genric getUser() {
+		for(Genric g : this.users!= null ? this.users : new ArrayList<Genric>()) {
+			g.put("_id", g.get("_id")+"");
+		}
 		return 		this.user = this.users!= null && this.users.size() >0 ?  this.users.get(0):null	;
 	
 	}
 
-	public void setUser(User user) {
+	public void setUser(Genric user) {
 		this.user = this.users!= null && this.users.size() >0 ?  this.users.get(0):null	;
 
 	}

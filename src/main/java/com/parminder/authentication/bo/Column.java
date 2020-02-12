@@ -2,16 +2,12 @@ package com.parminder.authentication.bo;
 
 import java.util.List;
 
-import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
+import org.springframework.data.annotation.Transient;
 	
 public class Column {
 
 	public enum Type {
-		Address,Boolean, Integer, Double, Date, Long, String, ObjectId, File, Reference,Select,Password, MultiSelect,MultiObject,Section
+		Address,Boolean, Integer, Double, Date, Long, String, ObjectId, File, Reference,Select,Password, MultiSelect,MultiObject,Section,Link
 	}
 
 	String name;
@@ -37,6 +33,9 @@ public class Column {
 	String targetClass;
 		
 	boolean listValue;
+	
+	@Transient
+	Table table;
 
 	public boolean isListValue() {
 		return listValue;
@@ -133,6 +132,14 @@ public class Column {
 
 	public void setParticipant(boolean participant) {
 		this.participant = participant;
+	}
+
+	public Table getTable() {
+		return table;
+	}
+
+	public void setTable(Table table) {
+		this.table = table;
 	}
 
 	

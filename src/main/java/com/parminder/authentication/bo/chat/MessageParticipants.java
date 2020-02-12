@@ -1,5 +1,6 @@
 package com.parminder.authentication.bo.chat;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.data.annotation.Transient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
+import com.parminder.authentication.bo.Genric;
 import com.parminder.authentication.bo.User;
 
 public class MessageParticipants {
@@ -37,10 +39,10 @@ public class MessageParticipants {
 	Date updatedAt;
 	
 	@JsonIgnore
-	List<User> users;
+	List<Genric> users;
 
 	@Transient
-	User user;
+	Genric user;
 	
 	@JsonIgnore
 	List<Message> messages;
@@ -88,19 +90,22 @@ public class MessageParticipants {
 		this.userId = userId;
 	}
 
-	public List<User> getUsers() {
+	public List<Genric> getUsers() {
 		return users;
 	}
 
-	public void setUsers(List<User> users) {
+	public void setUsers(List<Genric> users) {
 		this.users = users;
 	}
 
-	public User getUser() {
+	public Genric getUser() {
+		for(Genric g : this.users!= null ? this.users : new ArrayList<Genric>()) {
+			g.put("_id", g.get("_id")+"");
+		}
 		return user =this.users!= null && this.users.size() >0 ?  this.users.get(0):null	;	
 	}
 
-	public void setUser(User user) {
+	public void setUser(Genric user) {
 		this.user = this.users!= null && this.users.size() >0 ?  this.users.get(0):null	;
 	}
 

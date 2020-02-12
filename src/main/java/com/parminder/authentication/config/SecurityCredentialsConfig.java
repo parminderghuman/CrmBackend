@@ -18,7 +18,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.parminder.authentication.repository.UserRepository;
 import com.parminder.authentication.security.JWTAuthorizationFilter;
 import com.parminder.authentication.security.JwtUsernameAndPasswordAuthenticationFilter;
-import com.parminder.authentication.service.UserService;
 
 
 @EnableWebSecurity 	// Enable security config. This annotation denotes config for spring security.
@@ -66,18 +65,17 @@ public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {
 	// In addition, we need to define the password encoder also. So, auth manager can compare and verify passwords.
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+		auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
 	}
 	
+	@Autowired
+	BCryptPasswordEncoder bCryptPasswordEncoder;
 	@Bean
 	public JwtConfig jwtConfig() {
         	return new JwtConfig();
 	}
 	
-	@Bean
-	public BCryptPasswordEncoder passwordEncoder() {
-	    return new BCryptPasswordEncoder();
-	}
+
 }
 
 

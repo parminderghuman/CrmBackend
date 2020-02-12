@@ -8,9 +8,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
-
 
 @Document(collection = "users")
 public class User {
@@ -41,7 +38,18 @@ public class User {
 	
 	Location location;	
 	
-
+	@Transient
+	List<Genric> companyUsers;
+	
+	@Transient
+	Genric activeCompany;
+	
+	public Genric getActiveCompany() {
+		return activeCompany;
+	}
+	public void setActiveCompany(Genric activeCompany) {
+		this.activeCompany = activeCompany;
+	}
 	@Transient
 	String id;
 	
@@ -111,7 +119,11 @@ public class User {
 	public void setParent_id(String parent_id) {
 		this.parent_id = parent_id;
 	}
-	
-		
-	
+	public List<Genric> getCompanyUsers() {
+		return companyUsers;
+	}
+	public void setCompanyUsers(List<Genric> companyUsers) {
+		this.companyUsers = companyUsers;
+	}
+
 }

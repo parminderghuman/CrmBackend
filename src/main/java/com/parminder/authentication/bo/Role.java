@@ -3,9 +3,6 @@ package com.parminder.authentication.bo;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
-
 @Document(collection = "role")
 public class Role {
 	

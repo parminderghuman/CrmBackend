@@ -55,10 +55,10 @@ public class ChatParticipants {
 	ChatType chatType;
 	
 	@JsonIgnore
-	List<User> users;
+	List<Genric> users;
 
 	@Transient
-	User user;
+	Genric user;
 	
 	
 
@@ -152,25 +152,25 @@ public class ChatParticipants {
 	public void setRecipientId(ObjectId recipientId) {
 		this.recipientId = recipientId;
 	}	
-	public User getUser() {
+	public Genric getUser() {
 		if (this.users != null && this.users.size() > 0) {
 			return users.get(0);
 		}
 		return user;
 	}
 
-	public void setUser(User user) {
+	public void setUser(Genric user) {
 		if (this.users != null && this.users.size() > 0) {
 			user = users.get(0);
 		}
 		this.user = user;
 	}
 
-	public List<User> getUsers() {
+	public List<Genric> getUsers() {
 		return users;
 	}
 
-	public void setUsers(List<User> users) {
+	public void setUsers(List<Genric> users) {
 		this.users = users;
 	}
 

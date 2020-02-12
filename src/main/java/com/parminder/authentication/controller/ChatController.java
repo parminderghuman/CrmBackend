@@ -3,49 +3,29 @@ package com.parminder.authentication.controller;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 
-import com.parminder.authentication.bo.Column;
-import com.parminder.authentication.bo.Comment;
-import com.parminder.authentication.bo.Comment.CommenType;
-import com.parminder.authentication.bo.Permissions;
 import com.parminder.authentication.bo.User;
-import com.parminder.authentication.bo.User.UserType;
 import com.parminder.authentication.bo.chat.Chat;
 import com.parminder.authentication.bo.chat.ChatParticipants;
-import com.parminder.authentication.bo.chat.MessageParticipants;
 import com.parminder.authentication.bo.chat.ChatParticipants.ChatType;
-import com.parminder.authentication.repository.CommentRepository;
-import com.parminder.authentication.repository.TableRepository;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
 
 @RestController
@@ -55,33 +35,81 @@ public class ChatController {
 	MongoTemplate mongoTemplate;
 
 	@GetMapping(path = "/System_Chats")
-	public List<ChatParticipants> getCommets() {
+	public List<ChatParticipants> getCommets(@RequestParam HashMap<String, Object> searchCreteria) {
 		User loggerInUser = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
+		String loggedInUserId = loggerInUser.getActiveCompany().get("_id")+"";
 		LookupOperation lookupOperation1 = LookupOperation.newLookup().from("System_Chats").localField("chatId")
 				.foreignField("_id").as("chats");
 		LookupOperation lookupOperation3 = LookupOperation.newLookup().from("system_tables").localField("chats.entityClass")
 				.foreignField("_id").as("entities");
-		LookupOperation lookupOperation = LookupOperation.newLookup().from("users").localField("recipientId")
+		LookupOperation lookupOperation = LookupOperation.newLookup().from("User").localField("recipientId")
 				.foreignField("_id").as("users");
 		LookupOperation lookupOperationM = LookupOperation.newLookup().from("System_Messages")
 				.localField("lastMessageID").foreignField("_id").as("messages");
-		AggregationOperation sort = Aggregation.sort(Sort.by(Order.desc("createdAt")));
+		List<Order> orderList = new ArrayList<Sort.Order>();
+		if (searchCreteria.containsKey("sort")) {
+			try {
+				JSONObject sort = new JSONObject(searchCreteria.get("sort").toString());
+				for (String so : sort.keySet()) {
+					if ("asc".equals(sort.getString(so))) {
+						orderList.add(Order.asc(so));
+					} else {
+						orderList.add(Order.desc(so));
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		Criteria c = Criteria.where("userId").is(new ObjectId(loggedInUserId));
+		if (searchCreteria.containsKey("query")) {
+			try {
+				JSONObject sort = new JSONObject(searchCreteria.get("query").toString());
+				for (String so : sort.keySet()) {
+					Object val = sort.get(so);
+					if(val instanceof JSONObject) {
+						JSONObject b  = new JSONObject(val.toString());
+						for(String h : b.keySet()) {
+							if(h.equals("$oid")){
+								c.and(so ).is(new ObjectId(b.getString(h)));
+							}else if(h.equals("$gt")){
+								c.and(so ).gt(new Date(b.getLong(h)));
+							}else if(h.equals("$lt")){
+								c.and(so ).lt(new Date(b.getLong(h)));
+							}
+						}
+					}else {
+						c.and(so ).is(val);
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		
+		
+		
+		
+		AggregationOperation sort = Aggregation.sort(Sort.by(orderList));
+		AggregationOperation limit =  Aggregation.limit(5);
+
 		AggregationOperation match = Aggregation
-				.match(Criteria.where("userId").is(new ObjectId(loggerInUser.get_id())));
-		Aggregation agg = Aggregation.newAggregation(match, lookupOperation, lookupOperation1,lookupOperation3, lookupOperationM, sort);
+				.match(c);
+		Aggregation agg = Aggregation.newAggregation(match,sort, limit,lookupOperation, lookupOperation1,lookupOperation3, lookupOperationM );
 
 		List<ChatParticipants> aggResults = mongoTemplate
 				.aggregate(agg, "System_Chat_Particpants", ChatParticipants.class).getMappedResults();
-		return aggResults;
+		return aggResults;	
 	}
 
 	@GetMapping(path = "/System_Chats/{chatid}")
 	public Chat getChat(@PathVariable String chatid) {
-		User loggerInUser = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
+		
 		LookupOperation lookupOperation = LookupOperation.newLookup().from("System_Chat_Particpants").localField("_id")
 				.foreignField("chatId").as("tempParticipants");
 
-		LookupOperation lookupOperation1 = LookupOperation.newLookup().from("users")
+		LookupOperation lookupOperation1 = LookupOperation.newLookup().from("User")
 				.localField("tempParticipants.userId").foreignField("_id").as("tempUsers");
 		AggregationOperation match = Aggregation.match(Criteria.where("_id").is(new ObjectId(chatid)));
 		AggregationOperation sort = Aggregation.sort(Sort.by(Order.desc("createdAt")));
@@ -94,11 +122,11 @@ public class ChatController {
 	}
 	@GetMapping(path = "/System_Chats/Entity/{entityId}/{entityClass}")
 	public Chat getChat(@PathVariable String entityId,@PathVariable String entityClass) {
-		User loggerInUser = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
+		//User loggerInUser = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
 		LookupOperation lookupOperation = LookupOperation.newLookup().from("System_Chat_Particpants").localField("_id")
 				.foreignField("chatId").as("tempParticipants");
 
-		LookupOperation lookupOperation1 = LookupOperation.newLookup().from("users")
+		LookupOperation lookupOperation1 = LookupOperation.newLookup().from("User")
 				.localField("tempParticipants.userId").foreignField("_id").as("tempUsers");
 		AggregationOperation match = Aggregation.match(Criteria.where("entityId").is(new ObjectId(entityId)).and("entityClass").is(new ObjectId(entityClass)));
 		AggregationOperation sort = Aggregation.sort(Sort.by(Order.desc("createdAt")));
@@ -113,6 +141,7 @@ public class ChatController {
 	@PostMapping(path = "/System_Chats/{userId}")
 	public Chat CreateTable(@PathVariable String userId) {
 		User loggerInUser = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
+		String loggedInUserId = loggerInUser.getActiveCompany().get("_id")+"";
 //		Query query = new Query();
 //		query.addCriteria(
 //				Criteria.where("participants").elemMatch(
@@ -123,7 +152,7 @@ public class ChatController {
 		// if(chats == null || chats.size()==0) {
 
 		Query query = new Query();
-		query.addCriteria(Criteria.where("userId").is(new ObjectId(loggerInUser.get_id())).and("recipientId")
+		query.addCriteria(Criteria.where("userId").is(new ObjectId(loggedInUserId)).and("recipientId")
 				.is(new ObjectId(userId)));
 		List<ChatParticipants> chatParList = mongoTemplate.find(query, ChatParticipants.class,
 				"System_Chat_Particpants");
@@ -145,7 +174,7 @@ public class ChatController {
 			c.setUpdatedAt(c.getUpdatedAt());
 			c = mongoTemplate.save(c, "System_Chats");
 			ChatParticipants chatParticipants = new ChatParticipants();
-			chatParticipants.setUserId(new ObjectId(loggerInUser.get_id()));
+			chatParticipants.setUserId(new ObjectId(loggedInUserId));
 			chatParticipants.setStatus(true);
 			chatParticipants.setChatId(c.getId());
 			chatParticipants.setChatType(ChatType.OneToOne);
@@ -156,7 +185,7 @@ public class ChatController {
 			shatParticipants.setStatus(true);
 			shatParticipants.setChatId(c.getId());
 			shatParticipants.setChatType(ChatType.OneToOne);
-			shatParticipants.setRecipientId(new ObjectId(loggerInUser.get_id()));
+			shatParticipants.setRecipientId(new ObjectId(loggedInUserId));
 			mongoTemplate.save(chatParticipants, "System_Chat_Particpants");
 			mongoTemplate.save(shatParticipants, "System_Chat_Particpants");
 			chatParList.add(chatParticipants);
@@ -166,13 +195,15 @@ public class ChatController {
 		LookupOperation lookupOperation = LookupOperation.newLookup().from("System_Chat_Particpants").localField("_id")
 				.foreignField("chatId").as("tempParticipants");
 
-		LookupOperation lookupOperation1 = LookupOperation.newLookup().from("users")
+		LookupOperation lookupOperation1 = LookupOperation.newLookup().from("User")
 				.localField("tempParticipants.userId").foreignField("_id").as("tempUsers");
-		AggregationOperation match = Aggregation.match(Criteria.where("_id").is(chatParList.get(0).getChatId()));
+		
 		AggregationOperation sort = Aggregation.sort(Sort.by(Order.desc("createdAt")));
+		AggregationOperation match = Aggregation.match(Criteria.where("_id").is(chatParList.get(0).getChatId()));
+		
 		Aggregation agg = Aggregation.newAggregation(
 
-				match, lookupOperation, lookupOperation1, sort);
+				match, sort,lookupOperation, lookupOperation1 );
 
 		List<Chat> aggResults = mongoTemplate.aggregate(agg, "System_Chats", Chat.class).getMappedResults();
 		return aggResults.get(0);

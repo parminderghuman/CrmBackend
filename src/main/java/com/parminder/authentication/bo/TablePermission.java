@@ -6,7 +6,6 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.parminder.authentication.AuthenticationApplication.ObjectIdMapSerializer;
 import com.parminder.authentication.AuthenticationApplication.ObjectIdSerializer;
 
 @Document(collection = "System_Table_Permissions")

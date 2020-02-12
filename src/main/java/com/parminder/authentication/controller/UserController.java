@@ -1,10 +1,12 @@
 package com.parminder.authentication.controller;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +33,12 @@ public class UserController {
 	@GetMapping(path = "/me")
 	public User me() {
 		User loggerInUser = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
+		List<Genric> companyUsers  = mongoTemplate.find(new Query().addCriteria(Criteria.where("User").is(loggerInUser.get_id())),Genric.class	, "User");
+		for(Genric g :companyUsers) {
+			g.put("_id",g.get("_id")+"");
+			g.put("parent_id",g.get("parent_id")+"");
+		}
+		loggerInUser.setCompanyUsers(companyUsers);
 		return loggerInUser;
 	}
 

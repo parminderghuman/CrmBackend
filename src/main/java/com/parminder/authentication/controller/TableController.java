@@ -10,16 +10,20 @@ import java.util.Set;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import com.parminder.authentication.bo.Column;
+import com.parminder.authentication.bo.Column.Type;
 import com.parminder.authentication.bo.ColumnPermission;
+import com.parminder.authentication.bo.Genric;
 import com.parminder.authentication.bo.Permissions;
 import com.parminder.authentication.bo.Table;
 import com.parminder.authentication.bo.TablePermission;
@@ -33,7 +37,8 @@ public class TableController {
 
 	@Autowired
 	TableRepository tableRepository;
-
+	@Autowired	
+	MongoTemplate mongoTemplate;
 	@Autowired
 	TablePermissionRepository tablePermissionRepository;
 
@@ -47,23 +52,23 @@ public class TableController {
 		User loggerInUser = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
 
 		Table table = tableRepository.findById(id).get();
-		if (loggerInUser.getUserType() == UserType.SuperAdmin || loggerInUser.getUserType() == UserType.CompanyAdmin) {
+		if (loggerInUser.getUserType() == UserType.SuperAdmin ) {
 			setBestPermission(table, null, loggerInUser);
 		} else {
 			TablePermission tp = tablePermissionRepository.findByClassIdAndParentId(new ObjectId(table.get_id()),
-					new ObjectId(loggerInUser.getParent_id()));
+					new ObjectId(loggerInUser.getActiveCompany().get("parent_id")+""));
 			setBestPermission(table, tp, loggerInUser);
 		}
 
 		List<Table> tables = tableRepository.findByParentClass(table.get_id().toString());
 		for (Table t : tables) {
 			if (loggerInUser.getUserType() == UserType.SuperAdmin
-					|| loggerInUser.getUserType() == UserType.CompanyAdmin) {
+					) {
 				setBestPermission(t, null, loggerInUser);
 			} else {
 
 				TablePermission ttp = tablePermissionRepository.findByClassIdAndParentId(new ObjectId(t.get_id()),
-						new ObjectId(loggerInUser.getParent_id()));
+						new ObjectId(loggerInUser.getActiveCompany().get("parent_id")+""));
 				setBestPermission(t, ttp, loggerInUser);
 			}
 		}
@@ -100,9 +105,16 @@ public class TableController {
 	}
 
 	@GetMapping(path = "/system_tables/user")
-	public List<Table> CreateTable() throws Exception {
-
+	public List<Table> CreateTable( ) throws Exception {
+		List<String> rolList = new ArrayList<String>();
+		
 		User loggerInUser = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
+		 if(loggerInUser.getActiveCompany() != null) {
+			 for(ObjectId role :  (List<ObjectId>) loggerInUser.getActiveCompany().get("Role")) {
+				 rolList.add(role.toString());
+			 }
+			}
+		 
 		if (loggerInUser.getUserType() == UserType.SuperAdmin) {
 			List<Table> tables = tableRepository.findByParentClass(null);
 
@@ -119,7 +131,7 @@ public class TableController {
 				List<Table> cT = tableRepository.findByParentClass(table.get_id().toString());
 				for (Table CTT : cT) {
 					TablePermission tp = tablePermissionRepository.findByClassIdAndParentId(new ObjectId(CTT.get_id()),
-							new ObjectId(loggerInUser.getParent_id()));
+							new ObjectId(loggerInUser.getActiveCompany().get("parent_id")+""));
 					if (tp == null) {
 						setBestPermission(CTT, tp, loggerInUser);
 						table.addChildTables(CTT);
@@ -132,7 +144,7 @@ public class TableController {
 								table.addChildTables(CTT);
 
 								break;
-							} else if (loggerInUser.getRole().contains(role) && p.isCanList()) {
+							} else if (rolList.contains(role) && p.isCanList()) {
 								CTT = setBestPermission(CTT, tp, loggerInUser);
 								table.addChildTables(CTT);
 								break;
@@ -154,7 +166,7 @@ public class TableController {
 //					}
 				}
 				TablePermission tp = tablePermissionRepository.findByClassIdAndParentId(new ObjectId(table.get_id()),
-						new ObjectId(loggerInUser.getParent_id()));
+						new ObjectId(loggerInUser.getActiveCompany().get("parent_id")+""));
 				if (tp == null) {
 					setBestPermission(table, tp, loggerInUser);
 					rT.add(table);
@@ -166,7 +178,7 @@ public class TableController {
 							table = setBestPermission(table, tp, loggerInUser);
 							rT.add(table);
 							break;
-						} else if (loggerInUser.getRole().contains(role)) {
+						} else if (rolList.contains(role)) {
 							table = setBestPermission(table, tp, loggerInUser);
 							rT.add(table);
 							break;
@@ -197,16 +209,25 @@ public class TableController {
 
 	private Table setBestPermission(Table cTT, TablePermission tp, User loggerInUser) {
 		Permissions permissions = new Permissions();
+		List<String> rolList =new ArrayList<String>();
+		
+		
+		
 		if (tp == null) {
 			permissions.setRead(true);
 			permissions.setDelete(true);
 			permissions.setWrite(true);
 			permissions.setCanAdd(true);
+			
+
 		} else {
+			for(ObjectId b :  (List<ObjectId>) loggerInUser.getActiveCompany().get("Role")){
+				rolList.add(b.toString());
+			}	
 			for (Entry<String, Permissions> entrySet : tp.getRolePermissions().entrySet()) {
 				Permissions p = entrySet.getValue();
 				String role = entrySet.getKey();
-				if (role.equals("null") || loggerInUser.getRole().contains(role)) {
+				if (role.equals("null") || rolList.contains(role)) {
 					if (p.isRead()) {
 						permissions.setRead(p.isRead());
 					}
@@ -239,7 +260,7 @@ public class TableController {
 				Map<String, ColumnPermission> p = entrySet.getValue();
 				String role = entrySet.getKey();
 
-				if (role.equals("null") || loggerInUser.getRole().contains(role)) {
+				if (role.equals("null") || rolList.contains(role)) {
 
 					for (Entry<String, ColumnPermission> colemnEntrySet : p.entrySet()) {
 						ColumnPermission cp = colemnEntrySet.getValue();
@@ -259,6 +280,13 @@ public class TableController {
 			}
 		}
 		cTT.setColumnPermissions(columnPermission);
+		for(Column column : cTT.getColumns()) {
+			if(column.getType() == Type.Link) {
+				Table tte = tableRepository.findById(column.getTargetClass()).get();
+				column.setTable(tte);
+				setBestPermission(tte, null, loggerInUser);
+			}
+		}
 		return cTT;
 	}
 

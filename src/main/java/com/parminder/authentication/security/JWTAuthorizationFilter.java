@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -25,8 +26,6 @@ import com.parminder.authentication.bo.User;
 import com.parminder.authentication.bo.User.Status;
 import com.parminder.authentication.config.JwtConfig;
 import com.parminder.authentication.repository.UserRepository;
-import com.parminder.authentication.service.UserService;
-
 import io.jsonwebtoken.Jwts;
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
@@ -35,11 +34,11 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 	MongoTemplate mongoTemplate;
 
 	public JWTAuthorizationFilter(AuthenticationManager authenticationManager, JwtConfig jwtConfig,
-			UserRepository userRepository,MongoTemplate mongoTemplate) {
+			UserRepository userRepository, MongoTemplate mongoTemplate) {
 		super(authenticationManager);
 		this.jwtConfig = jwtConfig;
 		this.userRepository = userRepository;
-		this.mongoTemplate =mongoTemplate;
+		this.mongoTemplate = mongoTemplate;
 		// TODO Auto-generated constructor stub
 	}
 
@@ -68,25 +67,46 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 			token = token.substring(jwtConfig.getPrefix().length());
 			String email = Jwts.parser().setSigningKey(jwtConfig.getSecret().getBytes()).parseClaimsJws(token).getBody()
 					.getSubject();
-			if (email != null) {
 
-				User user = userRepository.findById(email).get();
-					Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-				 boolean isEnable = true;
-					boolean isUserNotExpired = true;
-					boolean isCredetialNotExpired = true;
-					boolean isAcoountNotLocked = true;
-			        if(user.getStatus() !=Status.Active ) {
-			        	isEnable = false;
-			        }
-			        
-			      
-					grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" +user.getUserType()));
-			        RequestContextHolder.getRequestAttributes().setAttribute("user",user,0);
-			        //return new User(user.getEmail(), user.getPassword(), isEnable, isUserNotExpired, isCredetialNotExpired, isAcoountNotLocked, grantedAuthorities);
-			        Genric m = mongoTemplate.findById(user.get_id()+"-users-"+"password",Genric.class,"encoded_passwords");
-			      //  mongoTemplate.find(new Query().addCriteria(Criteria.where(key)), entityClass)
-				return new UsernamePasswordAuthenticationToken(user.getUsername(), m.get("value").toString(),	grantedAuthorities);
+			if (email != null) {
+				String id = null;
+				String active = null;
+				if (email.split(",").length > 1) {
+					id = email.split(",")[0];
+					active = email.split(",")[1];
+				} else {
+					id = email;
+				}
+
+				User user = userRepository.findById(id).get();
+				if (active != null) {
+					
+					Genric	 g = mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(new ObjectId(active))), Genric.class	,"User");
+					g.put("_id",g.get("_id")+"");
+					g.put("parent_id",g.get("parent_id")+"");
+					 user.setActiveCompany(g);
+
+				}
+				Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
+				boolean isEnable = true;
+				boolean isUserNotExpired = true;
+				boolean isCredetialNotExpired = true;
+				boolean isAcoountNotLocked = true;
+				if (user.getStatus() != Status.Active) {
+					isEnable = false;
+				}
+
+				grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + user.getUserType()));
+				RequestContextHolder.getRequestAttributes().setAttribute("user", user, 0);
+			//	user.setActiveCompany(activeCompany);
+				// return new User(user.getEmail(), user.getPassword(), isEnable,
+				// isUserNotExpired, isCredetialNotExpired, isAcoountNotLocked,
+				// grantedAuthorities);
+				Genric m = mongoTemplate.findById(user.get_id() + "-users-" + "password", Genric.class,
+						"encoded_passwords");
+				// mongoTemplate.find(new Query().addCriteria(Criteria.where(key)), entityClass)
+				return new UsernamePasswordAuthenticationToken(user.getUsername(), m.get("value").toString(),
+						grantedAuthorities);
 
 			}
 		}
