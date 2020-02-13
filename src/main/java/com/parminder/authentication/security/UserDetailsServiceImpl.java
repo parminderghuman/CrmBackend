@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -55,7 +56,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 		// +user.getUserType()));
 		RequestContextHolder.getRequestAttributes().setAttribute("user", user, 0);
 		Genric m = mongoTemplate.findById(user.get_id() + "-users-" + "password", Genric.class, "encoded_passwords");
-		List<Genric> g = mongoTemplate.find(new Query().addCriteria(Criteria.where("User").is(user.get_id())),
+		List<Genric> g = mongoTemplate.find(new Query().addCriteria(Criteria.where("User").is(new ObjectId(user.get_id()))),
 				Genric.class, "User");
 		if(g!= null && g.size()>0) {
 

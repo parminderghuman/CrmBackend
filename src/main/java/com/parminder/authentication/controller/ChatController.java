@@ -241,6 +241,8 @@ public class ChatController {
 				chatParticipants.setStatus(true);
 				chatParticipants.setChatId(c.getId());
 				chatParticipants.setChatType(ChatType.Entity);
+				chatParticipants.setUpdatedAt(new Date());
+				chatParticipants.setCreatedAt(new Date());
 				mongoTemplate.save(chatParticipants, "System_Chat_Particpants");
 			}
 		}
