@@ -1,6 +1,7 @@
 package com.parminder.authentication.security;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.sql.Date;
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -85,6 +86,11 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 		
 		// Add token to header
 		response.addHeader(jwtConfig.getHeader(), jwtConfig.getPrefix() + token);
+		Writer w= response.getWriter();
+		w.write( jwtConfig.getPrefix() + token);
+		w.close();
+		w.flush();
+		
 	}
 	
 	// A (temporary) class just to represent the user credentials

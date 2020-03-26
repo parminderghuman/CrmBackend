@@ -1,8 +1,10 @@
 package com.parminder.authentication.controller;
 
 import java.lang.reflect.Array;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64.Decoder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -155,7 +157,7 @@ public class EntityController {
 		List<Order> orderList = new ArrayList<Sort.Order>();
 		if (searchCreteria.containsKey("sort")) {
 			try {
-				JSONObject sort = new JSONObject(searchCreteria.get("sort").toString());
+				JSONObject sort = new JSONObject(URLDecoder.decode(searchCreteria.get("sort").toString()));
 				for (String so : sort.keySet()) {
 					if ("asc".equals(sort.getString(so))) {
 						orderList.add(Order.asc(so));
@@ -171,7 +173,7 @@ public class EntityController {
 		query.with(Sort.by(orderList));
 		if (searchCreteria.containsKey("query")) {
 			try {
-				JSONObject sort = new JSONObject(searchCreteria.get("query").toString());
+				JSONObject sort = new JSONObject(URLDecoder.decode(searchCreteria.get("query").toString()));
 				for (String so : sort.keySet()) {
 					Object val = sort.get(so);
 					if(val instanceof JSONObject) {
@@ -256,7 +258,9 @@ public class EntityController {
 	public HashMap CreateTable(@PathVariable String entity, @RequestBody HashMap<String, Object> data) throws Exception {
 		final StringBuffer commentName = new StringBuffer();
 		;
-		List<ObjectId> chatUserList = new ArrayList<ObjectId>();
+		
+		 final List<String> didChanges = new ArrayList<String>();
+		List<Genric> chatUserList = new ArrayList<Genric>();
 		User user = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
 		Table table = tableRepository.findByName(entity);
 		Genric saveMap1 = new Genric();
@@ -268,29 +272,60 @@ public class EntityController {
 		Map<String, Object> passwordMap = new HashMap<String, Object>();
 		table.getColumns().forEach(column -> {
 			if (column.getType() == Column.Type.Boolean && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  Boolean.parseBoolean(saveMap.get(column.getName())+"") != Boolean.parseBoolean(data.get(column.getName()) + "")) {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), Boolean.parseBoolean(data.get(column.getName()) + ""));
 			} else if (column.getType() == Column.Type.Double && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  Double.parseDouble(saveMap.get(column.getName())+"") != Double.parseDouble(data.get(column.getName()) + "")) {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), Double.parseDouble(data.get(column.getName()) + ""));
 			} else if (column.getType() == Column.Type.Integer && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  Integer.parseInt(saveMap.get(column.getName())+"") != Integer.parseInt	(data.get(column.getName()) + "")) {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), Integer.parseInt(data.get(column.getName()) + ""));
 			} else if (column.getType() == Column.Type.Long && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  Long.parseLong(saveMap.get(column.getName())+"") != Long.parseLong(data.get(column.getName()) + "")) {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), Long.parseLong(data.get(column.getName()) + ""));
 			} else if (column.getType() == Column.Type.String && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  saveMap.get(column.getName())+"" != data.get(column.getName()) + "") {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), data.get(column.getName() + ""));
 			} else if (column.getType() == Column.Type.Select && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  saveMap.get(column.getName())+"" != data.get(column.getName()) + "") {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), data.get(column.getName() + ""));
 			} else if (column.getType() == Column.Type.Date && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  saveMap.get(column.getName())+"" != data.get(column.getName()) + "") {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), data.get(column.getName() + ""));
 			} else if (column.getType() == Column.Type.Address && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  saveMap.get(column.getName())+"" != data.get(column.getName()) + "") {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), data.get(column.getName() + ""));
 			} else if (column.getType() == Column.Type.MultiSelect && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  saveMap.get(column.getName())+"" != data.get(column.getName()) + "") {
+					didChanges.add(column.getName());
+				}
 				Object v = data.get(column.getName() + "");
 				if (v instanceof String) {
 					v = ((String) v).split(",");
 				}
 				saveMap.put(column.getName(), v);
 			} else if (column.getType() == Column.Type.MultiObject && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  saveMap.get(column.getName())+"" != data.get(column.getName()) + "") {
+					didChanges.add(column.getName());
+				}
 				Object v = data.get(column.getName() + "");
+				
 				if (v instanceof String) {
 					String[] k = ((String) v).split(",");
 					v = Arrays.asList(k);
@@ -306,7 +341,7 @@ public class EntityController {
 						if (column.isParticipant()) {
 								Genric use = mongoTemplate.findById(s  + "",Genric.class,"User");
 							if (use != null) {
-								chatUserList.add(new ObjectId(s + ""));
+								chatUserList.add(use);
 							}
 						}
 					}
@@ -316,11 +351,14 @@ public class EntityController {
 
 				saveMap.put(column.getName(), v);
 			} else if (column.getType() == Column.Type.ObjectId && data.containsKey(column.getName())) {
+				if(!saveMap.containsKey(column.getName()) ||  saveMap.get(column.getName())+"" != data.get(column.getName()) + "") {
+					didChanges.add(column.getName());
+				}
 				saveMap.put(column.getName(), new ObjectId(data.get(column.getName() + "") + ""));
 				if (column.isParticipant()) {
 					Genric use = mongoTemplate.findById(data.get(column.getName() + "") + "",Genric.class,"User");
 					if (use != null) {
-						chatUserList.add(new ObjectId(data.get(column.getName() + "") + ""));
+						chatUserList.add(use);
 					}
 
 				}
@@ -377,6 +415,8 @@ public class EntityController {
 		if (!data.containsKey("_id")) {
 			saveMap.put("createdAt", saveMap.get("updateAt"));
 			saveMap.put("createdBy", user.get_id());
+			didChanges.clear();
+			didChanges.add(" Add New "+entity);
 
 		} else {
 			saveMap.put("createdAt", data.get("updateAt"));
@@ -399,11 +439,13 @@ public class EntityController {
 		}
 		Genric l = mongoTemplate.save(saveMap, entity);
 		if(user.getActiveCompany() != null) {
-			chatUserList.add(new ObjectId(user.getActiveCompany().get("_id")+""));
+			chatUserList.add(user.getActiveCompany());
 
 		}
+		
 		chatController.createEntityChat(commentName.toString(), new ObjectId(table.get_id()),
-				new ObjectId(l.get("_id") + ""), chatUserList);
+				new ObjectId(l.get("_id") + ""), chatUserList,String.join(",",didChanges));
+		
 		l.put("_id", l.get("_id") + "");
 		if (passwordMap != null && passwordMap.size() > 0) {
 			for (String key : passwordMap.keySet()) {

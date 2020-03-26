@@ -14,6 +14,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.parminder.authentication.repository.UserRepository;
 import com.parminder.authentication.security.JWTAuthorizationFilter;
@@ -37,7 +39,7 @@ public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {
 	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http
+		http.cors().and()
 		    .csrf().disable()
 		     // make sure we use stateless session; session won't be used to store user's state.
 	            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -74,6 +76,8 @@ public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {
 	public JwtConfig jwtConfig() {
         	return new JwtConfig();
 	}
+	
+
 	
 
 }

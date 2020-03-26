@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import com.parminder.authentication.bo.Genric;
 import com.parminder.authentication.bo.User;
 import com.parminder.authentication.bo.chat.Chat;
 import com.parminder.authentication.bo.chat.ChatParticipants;
@@ -33,6 +34,9 @@ public class ChatController {
 
 	@Autowired
 	MongoTemplate mongoTemplate;
+	
+	@Autowired
+	MessageController messageController;
 
 	@GetMapping(path = "/System_Chats")
 	public List<ChatParticipants> getCommets(@RequestParam HashMap<String, Object> searchCreteria) {
@@ -166,6 +170,8 @@ public class ChatController {
 //			c.setParticipants(cl);
 //			return c;
 		} else {
+			
+			Genric g= mongoTemplate.findById(userId,Genric.class,"User");
 			chatParList = new ArrayList<ChatParticipants>();
 
 			Chat c = new Chat();
@@ -174,6 +180,7 @@ public class ChatController {
 			c.setUpdatedAt(c.getUpdatedAt());
 			c = mongoTemplate.save(c, "System_Chats");
 			ChatParticipants chatParticipants = new ChatParticipants();
+			chatParticipants.setSystemUserId(new ObjectId(loggerInUser.get_id()));
 			chatParticipants.setUserId(new ObjectId(loggedInUserId));
 			chatParticipants.setStatus(true);
 			chatParticipants.setChatId(c.getId());
@@ -182,6 +189,8 @@ public class ChatController {
 
 			ChatParticipants shatParticipants = new ChatParticipants();
 			shatParticipants.setUserId(new ObjectId(userId));
+			shatParticipants.setSystemUserId(new ObjectId(g.get("User")+""));
+
 			shatParticipants.setStatus(true);
 			shatParticipants.setChatId(c.getId());
 			shatParticipants.setChatType(ChatType.OneToOne);
@@ -190,6 +199,9 @@ public class ChatController {
 			mongoTemplate.save(shatParticipants, "System_Chat_Particpants");
 			chatParList.add(chatParticipants);
 			chatParList.add(shatParticipants);
+			HashMap<String, String>  m = new HashMap();
+			m.put("text",loggerInUser.getActiveCompany().get("Name")+" Added "+ g.get("Name")+"");
+			messageController.createMessageText(c.getId().toString(), m, true);
 			// return c;
 		}
 		LookupOperation lookupOperation = LookupOperation.newLookup().from("System_Chat_Particpants").localField("_id")
@@ -209,7 +221,8 @@ public class ChatController {
 		return aggResults.get(0);
 	}
 
-	public Chat createEntityChat(String name, ObjectId entityClass, ObjectId entityId, List<ObjectId> loggerInUsers) {
+	public Chat createEntityChat(String name, ObjectId entityClass, ObjectId entityId, List<Genric> chatUserList, String didChanges) {
+		User user = (User) RequestContextHolder.getRequestAttributes().getAttribute("user", 0);
 
 		Query query = new Query();
 		query.addCriteria(Criteria.where("entityClass").is(entityClass).and("entityId").is(entityId));
@@ -230,22 +243,33 @@ public class ChatController {
 			c = mongoTemplate.save(c, "System_Chats");
 		}
 
-		for (ObjectId loggerInUser : loggerInUsers) {
+		for (Genric loggerInUser : chatUserList) {
 			query = new Query();
-			query.addCriteria(Criteria.where("chatId").is(c.getId()).and("userId").is(loggerInUser));
+			query.addCriteria(Criteria.where("chatId").is(c.getId()).and("userId").is(new ObjectId(loggerInUser.get("_id")+"")));
 			ChatParticipants chatParticipants = mongoTemplate.findOne(query, ChatParticipants.class,
 					"System_Chat_Particpants");
 			if (chatParticipants == null) {
 				chatParticipants = new ChatParticipants();
-				chatParticipants.setUserId(loggerInUser);
+				chatParticipants.setUserId(new ObjectId(loggerInUser.get("_id")+""));
+				chatParticipants.setSystemUserId(new ObjectId(loggerInUser.get("User")+""));
 				chatParticipants.setStatus(true);
 				chatParticipants.setChatId(c.getId());
 				chatParticipants.setChatType(ChatType.Entity);
 				chatParticipants.setUpdatedAt(new Date());
 				chatParticipants.setCreatedAt(new Date());
 				mongoTemplate.save(chatParticipants, "System_Chat_Particpants");
+				HashMap<String, String>  m = new HashMap();
+				m.put("text",user.getActiveCompany().get("Name")+" Added "+ loggerInUser.get("Name"));
+				messageController.createMessageText(c.getId().toString(), m, true);
+				
 			}
 		}
+		//for(String s : didChanges) {
+			HashMap<String, String>  m = new HashMap();
+			m.put("text",user.getActiveCompany().get("Name")+" Changed "+ didChanges	);
+			messageController.createMessageText(c.getId().toString(), m, true);
+			
+		//}
 		// chatParticipants.setRecipientId(new ObjectId(userId));
 		return c;
 	}

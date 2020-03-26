@@ -38,6 +38,10 @@ public class User {
 	
 	Location location;	
 	
+	String deviceToken;
+	
+	String deviceType;
+	
 	@Transient
 	List<Genric> companyUsers;
 	
@@ -124,6 +128,22 @@ public class User {
 	}
 	public void setCompanyUsers(List<Genric> companyUsers) {
 		this.companyUsers = companyUsers;
+	}
+
+	public String getDeviceToken() {
+		return deviceToken;
+	}
+
+	public void setDeviceToken(String deviceToken) {
+		this.deviceToken = deviceToken;
+	}
+
+	public String getDeviceType() {
+		return deviceType;
+	}
+
+	public void setDeviceType(String deviceType) {
+		this.deviceType = deviceType;
 	}
 
 }

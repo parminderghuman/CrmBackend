@@ -32,6 +32,8 @@ public class ChatParticipants {
 
 	ObjectId userId;
 	@JsonSerialize(using=ObjectIdSerializer.class)
+	
+	ObjectId systemUserId;
 
 	ObjectId chatId;
 	@JsonSerialize(using=ObjectIdSerializer.class)
@@ -245,6 +247,14 @@ public class ChatParticipants {
 	public void setEntity(Genric entity) {
 		this.entity = this.entities!= null && this.entities.size() >0 ?  this.entities.get(0):null	;
 
+	}
+
+	public ObjectId getSystemUserId() {
+		return systemUserId;
+	}
+
+	public void setSystemUserId(ObjectId systemUserId) {
+		this.systemUserId = systemUserId;
 	}
 	
 }
